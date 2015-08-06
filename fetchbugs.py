@@ -13,14 +13,13 @@ import time
 
 from launchpadlib import launchpad
 
+import common
+
 
 NOW = datetime.datetime.now()
 LP_INSTANCE = 'production'
 CACHE_DIR = os.path.expanduser('~/.launchpadlib/cache/')
 
-SAVED_FIELDS = ['id', 'date_created', 'date_last_updated', 'description',
-                'information_type', 'tags', 'title', 'web_link']
-SAVED_TASK_FIELDS = ['assignee_link', 'date_assigned', 'importance', 'status']
 PRIVATE_FIELDS = ['description', 'title']
 
 
@@ -58,14 +57,14 @@ def main(username, project):
     for bug in bugs:
         bug_data = {}
 
-        for field in SAVED_FIELDS:
+        for field in common.SAVED_FIELDS:
             bug_data[field] = bug.bug.__getattr__(field)
         for task in bug.bug.bug_tasks:
             if task.bug_target_name == project:
                 today.setdefault(task.importance, [])
                 today[task.importance].append(bug.bug.id)
 
-                for field in SAVED_TASK_FIELDS:
+                for field in common.SAVED_TASK_FIELDS:
                     bug_data[field] = task.__getattr__(field)
 
         # Sanitize fields for private security bugs
@@ -80,8 +79,8 @@ def main(username, project):
 
         # Write a project-centric view of this bug to cloudfiles
         object_name = '%s-bug/%s' %(project, bug_data['id'])
-        clobber_object(container, object_name,
-                       json.dumps(bug_data, indent=4, sort_keys=True))
+        common.clobber_object(container, object_name,
+                              json.dumps(bug_data, indent=4, sort_keys=True))
 
         count += 1
         progress.update(count)
@@ -89,9 +88,9 @@ def main(username, project):
     progress.finish()
 
     print 'Updating state map'
-    clobber_object(container,
-                   'nova/%04d%02d%02d' %(NOW.year, NOW.month, NOW.day),
-                   json.dumps(today, indent=4, sort_keys=True))
+    common.clobber_object(container,
+                          'nova/%04d%02d%02d' %(NOW.year, NOW.month, NOW.day),
+                          json.dumps(today, indent=4, sort_keys=True))
 
 
 if __name__ == '__main__':
@@ -99,5 +98,12 @@ if __name__ == '__main__':
     parser.add_argument('--username')
     parser.add_argument('--project')
     args = parser.parse_args()
+
+    if not args.username:
+        print 'Please specify a launchpad username'
+        sys.exit(1)
+    if not args.project:
+        print 'Please specify a launchpad project'
+        sys.exit(1)
 
     main(args.username, args.project)
