@@ -5,3 +5,5 @@ All commands take a --username=<launchpad username> and --project.
 fetchbugs: updates my swift snapshot of all outstanding bugs
 triage:    triage bugs based on my personal criteria
 report:    dump a report about what my triage found
+
+review:    for each triaged bug, open a chromium tab with any code reviews outstanding for that bug. Yes really.

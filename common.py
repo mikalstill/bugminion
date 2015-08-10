@@ -1,4 +1,5 @@
 import datetime
+import subprocess
 
 
 SAVED_FIELDS = ['id', 'date_created', 'date_last_updated', 'description',
@@ -30,10 +31,13 @@ def get_most_recent_dump(container, project):
     return sorted(dump_files)[-1]
 
 
-def recently_triaged(container, project, bug):
-    # Have we triaged this one in the last 30 days?
-    triages = sorted(container.get_objects(
+def triages(container, project, bug):
+    return sorted(container.get_objects(
         prefix='%s-bug/%s-' %(project, bug)))
+
+
+def recently_triaged(triages):
+    # Have we triaged this one in the last 30 days?
     if triages:
         most_recent_triage = \
             triages[-1].name.split('/')[-1].split('-')[-1]
@@ -45,3 +49,11 @@ def recently_triaged(container, project, bug):
         return age.days < 30
 
     return False
+
+
+def runcmd(cmd):
+    obj = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE, shell=True)
+    (stdout, stderr) = obj.communicate()
+    returncode = obj.returncode
+    return stdout
