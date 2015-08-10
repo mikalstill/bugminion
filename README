@@ -1,0 +1,7 @@
+Welcome to some simple tools to help me handle OpenStack bugs.
+
+All commands take a --username=<launchpad username> and --project.
+
+fetchbugs: updates my swift snapshot of all outstanding bugs
+triage:    triage bugs based on my personal criteria
+report:    dump a report about what my triage found
