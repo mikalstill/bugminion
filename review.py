@@ -15,10 +15,6 @@ import random
 import common
 
 
-PRIORITIES = ['Critical', 'High', 'Medium', 'Low', 'Wishlist', 'Undecided',
-              'Unknown']
-
-
 def main(username, project):
     pyrax.set_setting('identity_type', 'rackspace')
     with open(os.path.expanduser('~/.bugminion'), 'r') as f:
@@ -31,23 +27,17 @@ def main(username, project):
     container = conn.create_container(conf['container'])
 
     # Read the most recent bug dump
-    dump_files = []
-    for dump_file in container.get_objects(prefix='%s/' % project):
-        dump_files.append(dump_file.name)
-    most_recent = sorted(dump_files)[-1]
+    most_recent = common.get_most_recent_dump(container, project)
     most_recent_datestamp = most_recent.split('/')[1]
     print 'Using the dump from %s' % most_recent
 
     bug_list = json.loads(container.get_objects(prefix=most_recent)[0].get())
 
-    for priority in PRIORITIES:
+    for priority in common.PRIORITIES:
         targets = bug_list.get(priority, [])
         random.shuffle(targets)
         for bug in targets:
-            triaged = len(container.get_objects(prefix='%s-bug/%s-%s'
-                                                %(project, bug,
-                                                  most_recent_datestamp))) == 1
-            if not triaged:
+            if not common.recently_triaged(container, project, bug):
                 print 'Bug %s (%s) is not triaged' %(bug, priority)
 
                 data = json.loads(container.get_objects(
