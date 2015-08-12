@@ -76,7 +76,8 @@ def main(username, project):
                         d = json.loads(line.rstrip())
                         if d.get('id'):
                             print '    --> %s' % d['id']
-                            for review in d['currentPatchSet'].get('approvals'):
+                            approvals = d['currentPatchSet'].get('approvals', [])
+                            for review in approvals:
                                 print ('        %s: %s %s'
                                        %(review['by'].get('name'),
                                          review['type'],
@@ -86,9 +87,9 @@ def main(username, project):
                                           '/#/q/%s,n,z' %(d['id']))
                             open_tabs += 1
 
-            if open_tabs > 10:
+            if open_tabs > 30:
                 print
-                print 'That\'s more than than ten tabs!'
+                print 'That\'s more than than thirty tabs!'
                 print 'Press return for more...'
                 sys.stdin.readline()
                 open_tabs = 0

@@ -83,7 +83,12 @@ def main(username, project):
                               json.dumps(bug_data, indent=4, sort_keys=True))
 
         count += 1
-        progress.update(count)
+        try:
+            progress.update(count)
+        except ValueError:
+            # Believe it or not, if a bug is filed during the run, we crash
+            # otherwise
+            pass
 
     progress.finish()
 

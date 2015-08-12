@@ -32,15 +32,19 @@ def get_most_recent_dump(container, project):
 
 
 def triages(container, project, bug):
-    return sorted(container.get_objects(
-        prefix='%s-bug/%s-' %(project, bug)))
+    triages = []
+
+    for t in container.get_objects(prefix='%s-bug/%s-' %(project, bug)):
+        triages.append(t.name)
+
+    return sorted(triages)
 
 
 def recently_triaged(triages):
     # Have we triaged this one in the last 30 days?
     if triages:
         most_recent_triage = \
-            triages[-1].name.split('/')[-1].split('-')[-1]
+            triages[-1].split('/')[-1].split('-')[-1]
         most_recent_datetime = datetime.datetime(
             int(most_recent_triage[0:4]),
             int(most_recent_triage[4:6]),

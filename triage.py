@@ -38,8 +38,9 @@ def main(username, project):
         random.shuffle(targets)
         for bug in targets:
             triages = common.triages(container, project, bug)
-            if common.recently_triaged(triages):
+            if not common.recently_triaged(triages):
                 print 'Bug %s (%s) is not triaged' %(bug, priority)
+                print 'Triages: %s' % triages
 
                 data = json.loads(container.get_objects(
                                      prefix='%s-bug/%s'
