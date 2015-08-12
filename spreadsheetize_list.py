@@ -43,7 +43,7 @@ def main(username, project, list):
                     data = {}
 
                 csvwriter.writerow([
-                    'https://https://bugs.launchpad.net/nova/+bug/%s' % bug,
+                    'https://bugs.launchpad.net/nova/+bug/%s' % bug,
                     data.get('title', 'unknown'),
                     data.get('status', 'unknown'),
                     username])

@@ -7,4 +7,7 @@ triage:          triage bugs based on my personal criteria
 prioritize_list: take a list of priority bugs and mark them as such
 report:          dump a report about what my triage found
 
+spreadsheetize:  take a list of bug numbers and make a csv file for a
+                 spreadsheet
+
 review:          for each triaged bug, open a chromium tab with any code reviews outstanding for that bug. Yes really.
