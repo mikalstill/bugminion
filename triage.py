@@ -42,9 +42,8 @@ def main(username, project):
                 print 'Bug %s (%s) is not triaged' %(bug, priority)
                 print 'Triages: %s' % triages
 
-                data = json.loads(container.get_objects(
-                                     prefix='%s-bug/%s'
-                                            %(project, bug))[0].get())
+                data = json.loads(container.get_object('%s-bug/%s'
+                                                       %(project, bug)).get())
                 for field in common.DISPLAY_ORDER:
                     print '%s: %s' %(field, data.get(field, ''))
                 print 'tags: %s' % ' '.join(data.get('tags', []))
