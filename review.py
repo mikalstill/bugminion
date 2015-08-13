@@ -34,6 +34,37 @@ def main(username, project):
     conn = pyrax.connect_to_cloudfiles(region=conf['region'].upper())
     container = conn.create_container(conf['container'])
 
+    open_tabs = 0
+
+    def find_reviews(search):
+        for line in search.split('\n'):
+            if len(line) < 1:
+                continue
+
+            d = json.loads(line.rstrip())
+            if d.get('id'):
+                print '    --> %s' % d['id']
+                approvals = d['currentPatchSet'].get('approvals', [])
+                for review in approvals:
+                    print ('        %s: %s %s'
+                           %(review['by'].get('name'),
+                             review['type'],
+                             review['value']))
+                common.runcmd('chromium-browser '
+                              'https://review.openstack.org'
+                              '/#/q/%s,n,z' %(d['id']))
+                open_tabs += 1
+    
+    # As a special case, always review things from the infra proposal bot
+    # first
+    search = common.runcmd('ssh review.openstack.org gerrit '
+                           'query --current-patch-set '
+                           '--format=json \' '
+                           'owner:"OpenStack Proposal Bot" '
+                           'status:open project:openstack/%s\''
+                           % project)
+    find_reviews(search)
+
     # Read the most recent bug dump
     most_recent = common.get_most_recent_dump(container, project)
     most_recent_datestamp = most_recent.split('/')[1]
@@ -41,7 +72,6 @@ def main(username, project):
 
     bug_list = json.loads(container.get_objects(prefix=most_recent)[0].get())
 
-    open_tabs = 0
     for priority in common.PRIORITIES:
         targets = bug_list.get(priority, [])
         for bug in targets:
@@ -69,23 +99,7 @@ def main(username, project):
                                            '--format=json \'message:" %s" '
                                            'status:open project:openstack/%s\''
                                            %(bug, project))
-                    for line in search.split('\n'):
-                        if len(line) < 1:
-                            continue
-
-                        d = json.loads(line.rstrip())
-                        if d.get('id'):
-                            print '    --> %s' % d['id']
-                            approvals = d['currentPatchSet'].get('approvals', [])
-                            for review in approvals:
-                                print ('        %s: %s %s'
-                                       %(review['by'].get('name'),
-                                         review['type'],
-                                         review['value']))
-                            common.runcmd('chromium-browser '
-                                          'https://review.openstack.org'
-                                          '/#/q/%s,n,z' %(d['id']))
-                            open_tabs += 1
+                    find_reviews(search)
 
             if open_tabs > 30:
                 print
