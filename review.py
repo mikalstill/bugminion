@@ -23,7 +23,12 @@ BUG_REPORT = """
 """
 
 
+open_tabs = 0    
+
+
 def main(username, project):
+    global open_tabs
+
     pyrax.set_setting('identity_type', 'rackspace')
     with open(os.path.expanduser('~/.bugminion'), 'r') as f:
         conf = json.loads(f.read())
@@ -34,9 +39,9 @@ def main(username, project):
     conn = pyrax.connect_to_cloudfiles(region=conf['region'].upper())
     container = conn.create_container(conf['container'])
 
-    open_tabs = 0
-
     def find_reviews(search):
+        global open_tabs
+
         for line in search.split('\n'):
             if len(line) < 1:
                 continue
@@ -77,7 +82,8 @@ def main(username, project):
         for bug in targets:
             triages = common.triages(container, project, bug)
             if common.recently_triaged(triages):
-                triage_data = json.loads(triages[-1].get())
+                triage_data = json.loads(
+                    container.get_object(triages[-1]).get())
                 if triage_data['osic'] == 'y':
                     bug_files = container.get_objects(
                                     prefix='%s-bug/%s' %(project, bug))

@@ -94,7 +94,8 @@ def main(username, project):
 
     print 'Updating state map'
     common.clobber_object(container,
-                          'nova/%04d%02d%02d' %(NOW.year, NOW.month, NOW.day),
+                          '%s/%04d%02d%02d' %(project, NOW.year, NOW.month,
+                                              NOW.day),
                           json.dumps(today, indent=4, sort_keys=True))
 
 
