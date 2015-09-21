@@ -24,10 +24,15 @@ BUG_REPORT = """
 
 
 open_tabs = 0    
+total_tabs = {}
 
 
-def main(username, project):
+def main(username, project, count):
     global open_tabs
+    global total_tabs
+
+    if not count:
+        count = 30
 
     pyrax.set_setting('identity_type', 'rackspace')
     with open(os.path.expanduser('~/.bugminion'), 'r') as f:
@@ -41,6 +46,7 @@ def main(username, project):
 
     def find_reviews(search):
         global open_tabs
+        global total_tabs
 
         for line in search.split('\n'):
             if len(line) < 1:
@@ -49,17 +55,21 @@ def main(username, project):
             d = json.loads(line.rstrip())
             if d.get('id'):
                 print '    --> %s' % d['id']
-                approvals = d['currentPatchSet'].get('approvals', [])
-                for review in approvals:
-                    print ('        %s: %s %s'
-                           %(review['by'].get('name'),
-                             review['type'],
-                             review['value']))
-                common.runcmd('chromium-browser '
-                              'https://review.openstack.org'
-                              '/#/q/%s,n,z' %(d['id']))
-                open_tabs += 1
-    
+                if d['id'] in total_tabs:
+                    print '        (skipped, already open)'
+                else:
+                    approvals = d['currentPatchSet'].get('approvals', [])
+                    for review in approvals:
+                        print ('        %s: %s %s'
+                               %(review['by'].get('name'),
+                                 review['type'],
+                                 review['value']))
+                    common.runcmd('chromium-browser '
+                                  'https://review.openstack.org'
+                                  '/#/q/%s,n,z' %(d['id']))
+                    open_tabs += 1
+                    total_tabs[d['id']] = True
+
     # As a special case, always review things from the infra proposal bot
     # first
     search = common.runcmd('ssh review.openstack.org gerrit '
@@ -107,21 +117,22 @@ def main(username, project):
                                            %(bug, project))
                     find_reviews(search)
 
-            if open_tabs > 30:
+            if open_tabs > count:
                 print
-                print 'That\'s more than than thirty tabs!'
+                print 'That\'s more than than %d tabs!' % count
                 print 'Press return for more...'
                 sys.stdin.readline()
                 open_tabs = 0
 
     print
-    print 'Done!'
+    print 'Done! Opened %s tabs in total' % len(total_tabs)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Fetch bugs from launchpad')
     parser.add_argument('--username')
     parser.add_argument('--project')
+    parser.add_argument('--count')
     args = parser.parse_args()
 
     if not args.username:
@@ -131,4 +142,4 @@ if __name__ == '__main__':
         print 'Please specify a launchpad project'
         sys.exit(1)
     
-    main(args.username, args.project)
+    main(args.username, args.project, int(args.count))
